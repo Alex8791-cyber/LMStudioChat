@@ -1,0 +1,28 @@
+workflows:
+    ios-workflow:
+      name: iOS Build
+      max_build_duration: 60
+      instance_type: mac_mini_m1
+      environment:
+        xcode: 15.0
+        groups:
+          - app_store_credentials
+      scripts:
+        - name: Install XcodeGen
+          script: |
+            brew install xcodegen
+        - name: Generate Xcode Project
+          script: |
+            xcodegen generate
+        - name: Set up code signing
+          script: |
+            xcode-project use-profiles
+        - name: Build iOS App
+          script: |
+            xcode-project build-ipa --workspace LMStudioChat.xcodeproj --scheme LMStudioChat
+      artifacts:
+        - build/ios/ipa/*.ipa
+      publishing:
+        email:
+          recipients:
+            - a.s.199191@gmail.com
