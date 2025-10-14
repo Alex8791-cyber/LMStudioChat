@@ -6,16 +6,17 @@ workflows:
       environment:
         xcode: 15.0
       scripts:
-        - name: Install XcodeGen
+        - name: Install Mint
           script: |
-            curl -Lo xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
-            unzip -o xcodegen.zip
-            chmod +x xcodegen
-            export PATH="$PWD:$PATH"
-            xcodegen --version
+            if ! command -v mint &> /dev/null; then
+              brew install mint
+            fi
+        - name: Install XcodeGen via Mint
+          script: |
+            mint install yonaskolb/XcodeGen@2.38.0
         - name: Generate Xcode Project
           script: |
-            ./xcodegen generate
+            mint run xcodegen@2.38.0 generate
         - name: Build iOS App
           script: |
             xcodebuild -project LMStudioChat.xcodeproj \
@@ -27,10 +28,11 @@ workflows:
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO
-        - name: Create IPA folder
+        - name: Package App
           script: |
             mkdir -p build/ios/ipa
-            cp -r build/LMStudioChat.xcarchive/Products/Applications/*.app build/ios/ipa/ || true
+            cp -r build/LMStudioChat.xcarchive/Products/Applications/*.app build/ios/ipa/ 2>/dev/null || echo "No app found, checking archive structure..."
+            ls -la build/LMStudioChat.xcarchive/Products/ || true
       artifacts:
         - build/ios/ipa
         - build/LMStudioChat.xcarchive
