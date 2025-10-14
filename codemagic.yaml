@@ -5,21 +5,20 @@ workflows:
       instance_type: mac_mini_m1
       environment:
         xcode: 15.0
-        groups:
-          - app_store_credentials
+        cocoapods: default
       scripts:
+        - name: Update Homebrew
+          script: |
+            brew update
         - name: Install XcodeGen
           script: |
-            brew install xcodegen
+            brew install xcodegen || brew upgrade xcodegen
         - name: Generate Xcode Project
           script: |
             xcodegen generate
-        - name: Set up code signing
-          script: |
-            xcode-project use-profiles
         - name: Build iOS App
           script: |
-            xcode-project build-ipa --workspace LMStudioChat.xcodeproj --scheme LMStudioChat
+            xcodegen build --scheme LMStudioChat
       artifacts:
         - build/ios/ipa/*.ipa
       publishing:
