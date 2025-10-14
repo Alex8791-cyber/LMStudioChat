@@ -5,37 +5,35 @@ workflows:
       instance_type: mac_mini_m1
       environment:
         xcode: 15.0
-        vars:
-          HOMEBREW_NO_AUTO_UPDATE: 1
       scripts:
         - name: Install XcodeGen
           script: |
             curl -Lo xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
-            unzip xcodegen.zip
+            unzip -o xcodegen.zip
             chmod +x xcodegen
-            mkdir -p ~/bin
-            mv xcodegen ~/bin/
-            echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
-            export PATH="$HOME/bin:$PATH"
+            export PATH="$PWD:$PATH"
+            xcodegen --version
         - name: Generate Xcode Project
           script: |
-            ~/bin/xcodegen generate
+            ./xcodegen generate
         - name: Build iOS App
           script: |
             xcodebuild -project LMStudioChat.xcodeproj \
               -scheme LMStudioChat \
+              -sdk iphoneos \
               -configuration Release \
               -archivePath build/LMStudioChat.xcarchive \
               archive \
               CODE_SIGN_IDENTITY="" \
               CODE_SIGNING_REQUIRED=NO \
               CODE_SIGNING_ALLOWED=NO
-        - name: Export IPA
+        - name: Create IPA folder
           script: |
             mkdir -p build/ios/ipa
-            cp -r build/LMStudioChat.xcarchive/Products/Applications/LMStudioChat.app build/ios/ipa/
+            cp -r build/LMStudioChat.xcarchive/Products/Applications/*.app build/ios/ipa/ || true
       artifacts:
-        - build/ios/ipa/*.app
+        - build/ios/ipa
+        - build/LMStudioChat.xcarchive
       publishing:
         email:
           recipients:
