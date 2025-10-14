@@ -1,26 +1,42 @@
 workflows:
-  ios-workflow:
-    name: iOS Build
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-    environment:
-      xcode: 15.0
-    scripts:
-      - name: Install XcodeGen from GitHub
-        script: |
-          curl -Lo xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
-          unzip xcodegen.zip
-          chmod +x xcodegen
-          sudo mv xcodegen /usr/local/bin/
-      - name: Generate Xcode Project
-        script: |
-          xcodegen generate
-      - name: Build iOS App
-        script: |
-          CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO xcodebuild -project LMStudioChat.xcodeproj -scheme LMStudioChat -configuration Release -archivePath build/LMStudioChat.xcarchive archive
-    artifacts:
-      - build/LMStudioChat.xcarchive
-    publishing:
-      email:
-        recipients:
-          - a.s.199191@gmail.com
+    ios-workflow:
+      name: iOS Build
+      max_build_duration: 60
+      instance_type: mac_mini_m1
+      environment:
+        xcode: 15.0
+        vars:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+      scripts:
+        - name: Install XcodeGen
+          script: |
+            curl -Lo xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
+            unzip xcodegen.zip
+            chmod +x xcodegen
+            mkdir -p ~/bin
+            mv xcodegen ~/bin/
+            echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
+            export PATH="$HOME/bin:$PATH"
+        - name: Generate Xcode Project
+          script: |
+            ~/bin/xcodegen generate
+        - name: Build iOS App
+          script: |
+            xcodebuild -project LMStudioChat.xcodeproj \
+              -scheme LMStudioChat \
+              -configuration Release \
+              -archivePath build/LMStudioChat.xcarchive \
+              archive \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+        - name: Export IPA
+          script: |
+            mkdir -p build/ios/ipa
+            cp -r build/LMStudioChat.xcarchive/Products/Applications/LMStudioChat.app build/ios/ipa/
+      artifacts:
+        - build/ios/ipa/*.app
+      publishing:
+        email:
+          recipients:
+            - a.s.199191@gmail.com
