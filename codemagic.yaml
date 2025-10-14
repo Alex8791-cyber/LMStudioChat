@@ -5,23 +5,19 @@ workflows:
       instance_type: mac_mini_m1
       environment:
         xcode: 15.0
-        cocoapods: default
       scripts:
-        - name: Update Homebrew
+        - name: Install XcodeGen from GitHub
           script: |
-            brew update
-        - name: Install XcodeGen
-          script: |
-            brew install xcodegen || brew upgrade xcodegen
+            curl -Lo xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.38.0/xcodegen.zip
+            unzip xcodegen.zip
+            chmod +x xcodegen
+            sudo mv xcodegen /usr/local/bin/
         - name: Generate Xcode Project
           script: |
             xcodegen generate
         - name: Build iOS App
           script: |
-            xcodegen build --scheme LMStudioChat
+            xcodebuild -project LMStudioChat.xcodeproj -scheme LMStudioChat -configuration Release -archivePath build/LMStudioChat.xcarchive archive CODE_SIGN_IDENTITY=""      
+  CODE_SIGNING_REQUIRED=NO
       artifacts:
-        - build/ios/ipa/*.ipa
-      publishing:
-        email:
-          recipients:
-            - a.s.199191@gmail.com
+        - build/LMStudioChat.xcarchive
